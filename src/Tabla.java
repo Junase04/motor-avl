@@ -31,6 +31,9 @@ public class Tabla {
         return this.arbol;
     }
 
+    /**
+     * Inserta un registro aplicando reversión automática en caso de fallo de persistencia.
+     */
     public void insertar(int id, Row registro) throws IOException {
         AVLTree.Node backupRaiz = this.arbol.getRoot();
         int backupCantidad = this.cantidadRegistros;
@@ -38,14 +41,18 @@ public class Tabla {
         try {
             this.arbol.insertar(id, registro);
             this.cantidadRegistros++;
-            guardarADisco();
+            guardarADisco(); // Intenta persistir inmediatamente
         } catch (IOException e) {
+            // ROLLBACK: Restauración del estado previo en memoria RAM
             this.arbol.setRoot(backupRaiz);
             this.cantidadRegistros = backupCantidad;
             throw e; 
         }
     }
 
+    /**
+     * Remueve un registro aplicando reversión automática en caso de fallo de persistencia.
+     */
     public void eliminarRegistro(int id) throws IOException {
         if (this.arbol.buscar(id) == null) {
             throw new IllegalArgumentException("El ID especificado (" + id + ") no existe en la tabla.");
@@ -59,12 +66,16 @@ public class Tabla {
             this.cantidadRegistros--;
             guardarADisco();
         } catch (IOException e) {
+            // ROLLBACK
             this.arbol.setRoot(backupRaiz);
             this.cantidadRegistros = backupCantidad;
             throw e;
         }
     }
 
+    /**
+     * Modifica un registro aplicando reversión automática en caso de fallo de persistencia.
+     */
     public void actualizarRegistro(int id, String campo, Object nuevoValor) throws IOException {
         Row fila = this.arbol.buscar(id);
         if (fila == null) {
@@ -78,6 +89,7 @@ public class Tabla {
             fila.put(campo, nuevoValor);
             guardarADisco();
         } catch (IOException e) {
+            // ROLLBACK: Devuelve el campo a su estado original y restaura punteros
             fila.put(campo, valorAnterior);
             this.arbol.setRoot(backupRaiz);
             throw e;
