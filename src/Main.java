@@ -1,6 +1,6 @@
 public class Main {
     public static void main(String[] args) {
-        // Inicialización del gestor de almacenamiento central
+        // Inicialización del gestor de almacenamiento 
         DatabaseManager dbManager = new DatabaseManager();
 
         // Inyección de dependencias en el componente de interfaz de usuario
